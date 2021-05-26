@@ -1,4 +1,6 @@
 const { ApolloServer } = require("apollo-server");
+const fs = require("fs");
+const path = require("path");
 
 let links = [
   {
@@ -8,32 +10,45 @@ let links = [
   },
 ];
 
-const typeDefs = `
-  type Query {
-    info: String!
-    feed: [Link!]!
-  }
+const typeDefs = fs.readFileSync(
+  path.join(__dirname, "schema.graphql"),
+  "utf8"
+);
 
-  type Mutation {
-    post(url: String!, description: String!): Link!
-  }
-  
-  type Link {
-    id: ID!
-    description: String!
-    url: String!
-  }`;
-
+let idCount = links.length;
 const resolvers = {
   Query: {
     info: () => `This is the API of Hackernews`,
     feed: () => links,
+    link: (parent, args) => links.find((item) => args.id === item.id),
   },
 
-  Link: {
-    id: (parent) => parent.id,
-    description: (parent) => parent.description,
-    url: (parent) => parent.url,
+  Mutation: {
+    post: (parent, args) => {
+      const link = {
+        id: `link-${idCount++}`,
+        description: args.description,
+        url: args.url,
+      };
+      links.push(link);
+      return link;
+    },
+
+    updateLink: (parent, args) => {
+      const { id, description, url } = args;
+      const link = links.find((item) => id === item.id);
+      if (!link) return null;
+      if (description) link.description = description;
+      if (url) link.url = url;
+      return link;
+    },
+
+    deleteLink: (parent, args) => {
+      const { id } = args;
+      const linkToDelete = links.find((item) => item.id === id);
+      links = links.filter((item) => item.id !== id);
+      return linkToDelete;
+    },
   },
 };
 
