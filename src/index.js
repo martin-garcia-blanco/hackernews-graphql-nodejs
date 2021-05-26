@@ -3,6 +3,11 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fs = require("fs");
 const path = require("path");
+const Query = require("./resolvers/Query");
+const Mutation = require("./resolvers/Mutation");
+const User = require("./resolvers/User");
+const Link = require("./resolvers/Link");
+const { getUserIdFrom } = require("./utils/authorization");
 
 const typeDefs = fs.readFileSync(
   path.join(__dirname, "schema.graphql"),
@@ -10,47 +15,22 @@ const typeDefs = fs.readFileSync(
 );
 
 const resolvers = {
-  Query: {
-    info: () => `This is the API of Hackernews`,
-    feed: async (parent, args, context) => context.prisma.link.findMany(),
-    link: async (parent, args, context) => {
-      return context.prisma.link.findUnique({
-        where: { id: parseInt(args.id) },
-      });
-    },
-  },
-
-  Mutation: {
-    post: (parent, args, context) => {
-      const link = context.prisma.link.create({
-        data: { url: args.url, description: args.description },
-      });
-      return link;
-    },
-
-    updateLink: async (parent, args, context) => {
-      const { id, description, url } = args;
-      const updatedLink = await context.prisma.link.update({
-        where: { id: parseInt(id) },
-        data: { url, description },
-      });
-      return updatedLink;
-    },
-
-    deleteLink: async (parent, args, context) => {
-      const { id } = args;
-      const linkToDelete = await context.prisma.link.delete({
-        where: { id: parseInt(id) },
-      });
-      return linkToDelete;
-    },
-  },
+  Query,
+  Mutation,
+  User,
+  Link,
 };
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: { prisma },
+  context: ({ req }) => {
+    return {
+      ...req,
+      prisma,
+      userId: req && req.headers.authorization ? getUserIdFrom(req) : null,
+    };
+  },
 });
 
 server
