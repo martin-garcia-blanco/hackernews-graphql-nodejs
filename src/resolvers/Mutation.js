@@ -26,14 +26,16 @@ async function login(parent, args, context, info) {
 
 async function post(parent, args, context) {
   const { userId } = context;
-  const link = context.prisma.link.create({
+  const newLink = context.prisma.link.create({
     data: {
       url: args.url,
       description: args.description,
       postedBy: { connect: { id: userId } },
     },
   });
-  return link;
+  context.pubSub.publish("NEW_LINK", newLink);
+
+  return newLink;
 }
 
 async function updateLink(parent, args, context) {
