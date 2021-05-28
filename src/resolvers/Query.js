@@ -1,13 +1,16 @@
 async function feed(parent, args, context, info) {
-  const { filter } = args;
-  const linkList = await context.prisma.link.findMany();
+  const { filter, skip, take } = args;
 
-  if (Boolean(filter)) {
-    const newList = linkList.filter(
-      (link) => link.url.includes(filter) || link.description.includes(filter)
-    );
-    return newList;
-  }
+  const where = filter
+    ? {
+        OR: [
+          { url: { contains: filter } },
+          { description: { contains: filter } },
+        ],
+      }
+    : {};
+
+  const linkList = await context.prisma.link.findMany({ where, take, skip });
 
   return linkList;
 }
