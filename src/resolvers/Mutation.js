@@ -72,4 +72,34 @@ async function deleteLink(parent, args, context) {
   });
   return linkToDelete;
 }
-module.exports = { signup, login, post, updateLink, deleteLink };
+
+async function vote(parent, args, context, info) {
+  const { userId } = context;
+  const { linkId } = args;
+  if (!userId) throw new Error("Unauthorized");
+
+  const vote = await context.prisma.vote.findUnique({
+    where: {
+      linkId_userId: {
+        linkId: Number(linkId),
+        userId: Number(userId),
+      },
+    },
+  });
+
+  if (Boolean(vote)) {
+    throw new Error(`Already voted for link: ${args.linkId}`);
+  }
+
+  const newVote = context.prisma.vote.create({
+    data: {
+      user: { connect: { id: Number(userId) } },
+      link: { connect: { id: Number(linkId) } },
+    },
+  });
+
+  context.pubSub.publish("NEW_VOTE", newVote);
+
+  return newVote;
+}
+module.exports = { signup, login, post, updateLink, deleteLink, vote };

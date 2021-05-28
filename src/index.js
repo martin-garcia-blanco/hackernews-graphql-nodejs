@@ -8,6 +8,7 @@ const Mutation = require("./resolvers/Mutation");
 const User = require("./resolvers/User");
 const Link = require("./resolvers/Link");
 const Subscription = require("./resolvers/Subscription");
+const Vote = require("./resolvers/Vote");
 const { getUserIdFrom } = require("./utils/authorization");
 
 const pubSub = new PubSub();
@@ -23,6 +24,7 @@ const resolvers = {
   User,
   Link,
   Subscription,
+  Vote,
 };
 
 const server = new ApolloServer({
