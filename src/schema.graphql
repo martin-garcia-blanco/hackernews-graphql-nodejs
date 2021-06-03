@@ -1,6 +1,6 @@
 type Query {
   info: String!
-  feed(filter: String, skip: Int, take: Int): [Link!]!
+  feed(filter: String, skip: Int, take: Int): Feed!
   link(id: ID!): Link
 }
 
@@ -11,6 +11,11 @@ type Mutation {
   signup(email: String!, password: String!, name: String!): AuthPayload
   login(email: String!, password: String!): AuthPayload
   vote(linkId: ID!): Vote
+}
+
+type Feed {
+  links: [Link!]!
+  count: Int!
 }
 
 type Subscription {
